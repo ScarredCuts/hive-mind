@@ -1,0 +1,1 @@
+"""Denoising engine for the Hive Mind system."""

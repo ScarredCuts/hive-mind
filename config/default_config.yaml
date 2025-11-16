@@ -1,0 +1,58 @@
+# Default Hive Mind Configuration
+
+# Model configurations
+models:
+  - model_id: "gpt-4"
+    provider: "openai"
+    model_name: "gpt-4"
+    api_key: "${OPENAI_API_KEY}"
+    max_tokens: 2048
+    temperature: 0.7
+    enabled: true
+    weight: 1.0
+    timeout_seconds: 30
+    retry_attempts: 3
+
+  - model_id: "claude-3-sonnet"
+    provider: "anthropic"
+    model_name: "claude-3-sonnet-20240229"
+    api_key: "${ANTHROPIC_API_KEY}"
+    max_tokens: 2048
+    temperature: 0.7
+    enabled: true
+    weight: 1.0
+    timeout_seconds: 30
+    retry_attempts: 3
+
+  - model_id: "command-light"
+    provider: "cohere"
+    model_name: "command-light"
+    api_key: "${COHERE_API_KEY}"
+    max_tokens: 2048
+    temperature: 0.7
+    enabled: true
+    weight: 0.8
+    timeout_seconds: 30
+    retry_attempts: 3
+
+# Consensus configuration
+consensus_algorithm: "weighted_voting"
+consensus_threshold: 0.7
+
+# Denoising configuration
+denoising_enabled: true
+max_denoising_iterations: 3
+
+# Reputation system
+reputation_enabled: true
+
+# Memory system
+memory_enabled: true
+vector_db_path: "./chroma_db"
+
+# System configuration
+redis_url: "redis://localhost:6379"
+max_context_tokens: 8000
+response_timeout_seconds: 60
+parallel_requests: true
+log_level: "INFO"
