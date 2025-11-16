@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Mind - Multi-Model Conversation Framework</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .chat-section {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+        }
+
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .chat-header h2 {
+            font-size: 1.25rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background: #f3f4f6;
+            color: #1f2937;
+            align-self: flex-start;
+            border: 1px solid #e5e7eb;
+        }
+
+        .message-meta {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .confidence-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confidence-fill {
+            width: 60px;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .confidence-level {
+            height: 100%;
+            background: #10b981;
+            transition: width 0.3s ease;
+        }
+
+        .chat-input {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-input input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .chat-input button {
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-input button:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        .chat-input button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+
+        .panel h3 {
+            font-size: 1rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .model-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .model-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: #f9fafb;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .model-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .model-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .model-status.healthy {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .model-status.unhealthy {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .system-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            
+            .panel {
+                min-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🧠 Hive Mind</h1>
+        <div class="subtitle">Multi-Model Conversation Framework with Collective Intelligence</div>
+    </header>
+
+    <div class="container">
+        <div class="chat-section">
+            <div class="chat-header">
+                <h2>Conversation</h2>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="status-text">Connected</span>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be added here dynamically -->
+            </div>
+
+            <div class="chat-input">
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="message-input" 
+                        placeholder="Type your message here..."
+                        onkeypress="handleKeyPress(event)"
+                    >
+                </div>
+                <button id="send-button" onclick="sendMessage()">
+                    Send
+                </button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="panel">
+                <h3>🤖 Model Status</h3>
+                <div class="model-stats" id="model-stats">
+                    <!-- Model stats will be populated here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>📊 System Statistics</h3>
+                <div class="system-stats" id="system-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="active-conversations">0</div>
+                        <div class="stat-label">Active Chats</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="configured-models">0</div>
+                        <div class="stat-label">Models</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avg-confidence">0%</div>
+                        <div class="stat-label">Avg Confidence</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="consensus-strength">0%</div>
+                        <div class="stat-label">Consensus</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>⚙️ Settings</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                        <input type="checkbox" id="use-memory" checked>
+                        Use Memory
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                        <input type="checkbox" id="show-details" checked>
+                        Show Details
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationId = null;
+        let isProcessing = false;
+
+        // Initialize the chat
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemStats();
+            loadModelStats();
+            
+            // Set up periodic updates
+            setInterval(loadSystemStats, 10000); // Update every 10 seconds
+            setInterval(loadModelStats, 30000);  // Update every 30 seconds
+        });
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isProcessing) return;
+            
+            isProcessing = true;
+            document.getElementById('send-button').disabled = true;
+            document.getElementById('send-button').innerHTML = '<div class="loading"></div>';
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            try {
+                const useMemory = document.getElementById('use-memory').checked;
+                
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        conversation_id: conversationId,
+                        use_memory: useMemory
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update conversation ID
+                conversationId = data.conversation_id;
+                
+                // Add assistant response to chat
+                addMessage(data.response, 'assistant', {
+                    confidence: data.confidence,
+                    consensus_strength: data.consensus_strength,
+                    divergence: data.divergence,
+                    contributing_models: data.contributing_models,
+                    denoising_iterations: data.denoising_iterations
+                });
+                
+                // Update stats
+                loadSystemStats();
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('Sorry, there was an error processing your message. Please try again.', 'assistant', {
+                    error: true
+                });
+            } finally {
+                isProcessing = false;
+                document.getElementById('send-button').disabled = false;
+                document.getElementById('send-button').textContent = 'Send';
+            }
+        }
+
+        function addMessage(content, type, metadata = {}) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            let metaHtml = '';
+            const showDetails = document.getElementById('show-details').checked;
+            
+            if (type === 'assistant' && !metadata.error) {
+                metaHtml = `
+                    <div class="message-meta">
+                        <div class="confidence-bar">
+                            <span>Confidence: ${Math.round(metadata.confidence * 100)}%</span>
+                            <div class="confidence-fill">
+                                <div class="confidence-level" style="width: ${metadata.confidence * 100}%"></div>
+                            </div>
+                        </div>
+                        ${showDetails ? `
+                            <div style="font-size: 0.7rem; opacity: 0.6;">
+                                ${metadata.contributing_models.length} models • 
+                                Consensus: ${Math.round(metadata.consensus_strength * 100)}%
+                                ${metadata.denoising_iterations > 0 ? ` • ${metadata.denoising_iterations} denoised` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else if (metadata.error) {
+                metaHtml = '<div class="message-meta" style="color: #ef4444;">⚠️ Error occurred</div>';
+            }
+            
+            messageDiv.innerHTML = `
+                <div>${content}</div>
+                ${metaHtml}
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        async function loadSystemStats() {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+                
+                document.getElementById('active-conversations').textContent = data.active_conversations;
+                document.getElementById('configured-models').textContent = data.configured_models;
+                document.getElementById('avg-confidence').textContent = 
+                    Math.round((data.learning_insights.conversation_patterns.avg_consensus_confidence || 0) * 100) + '%';
+                document.getElementById('consensus-strength').textContent = 
+                    Math.round((data.learning_insights.conversation_patterns.avg_consensus_confidence || 0) * 100) + '%';
+                    
+            } catch (error) {
+                console.error('Error loading system stats:', error);
+            }
+        }
+
+        async function loadModelStats() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                const modelStatsContainer = document.getElementById('model-stats');
+                modelStatsContainer.innerHTML = '';
+                
+                for (const [modelId, health] of Object.entries(data.models)) {
+                    const statDiv = document.createElement('div');
+                    statDiv.className = 'model-stat';
+                    
+                    const statusClass = health.healthy ? 'healthy' : 'unhealthy';
+                    const statusText = health.healthy ? 'Healthy' : 'Unhealthy';
+                    
+                    statDiv.innerHTML = `
+                        <span class="model-name">${modelId}</span>
+                        <span class="model-status ${statusClass}">${statusText}</span>
+                    `;
+                    
+                    modelStatsContainer.appendChild(statDiv);
+                }
+                
+                // Update status indicator
+                const allHealthy = Object.values(data.models).every(m => m.healthy);
+                document.getElementById('status-text').textContent = allHealthy ? 'All systems operational' : 'Some models unavailable';
+                document.querySelector('.status-dot').style.background = allHealthy ? '#10b981' : '#f59e0b';
+                
+            } catch (error) {
+                console.error('Error loading model stats:', error);
+                document.getElementById('status-text').textContent = 'Connection issues';
+                document.querySelector('.status-dot').style.background = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>

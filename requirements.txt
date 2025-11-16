@@ -1,0 +1,40 @@
+# Core async and web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+
+# HTTP clients for multiple LLM APIs
+httpx==0.25.2
+openai==1.3.7
+anthropic==0.7.7
+cohere==4.39
+
+# Data handling and async
+aiohttp==3.9.1
+aiofiles==23.2.1
+pydantic==2.5.0
+numpy==1.24.3
+pandas==2.0.3
+
+# Vector database and embeddings
+chromadb==0.4.18
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+
+# Redis for caching and state management
+redis==5.0.1
+
+# Monitoring and logging
+structlog==23.2.0
+rich==13.7.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Development
+black==23.11.0
+isort==5.12.0
+mypy==1.7.1
+flake8==6.1.0
